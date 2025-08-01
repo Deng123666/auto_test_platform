@@ -1,0 +1,225 @@
+<!-- templates/api/test_report.html -->
+<!DOCTYPE html>
+<html>
+<head>
+    <title>测试报告 - {{ execution.test_case.name }}</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+            border-bottom: 2px solid #eee;
+            padding-bottom: 20px;
+        }
+
+        .summary {
+            background-color: #f8f9fa;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 30px;
+        }
+
+        .summary-stats {
+            display: flex;
+            justify-content: space-around;
+            margin-top: 20px;
+        }
+
+        .stat-box {
+            text-align: center;
+            padding: 15px;
+            border-radius: 8px;
+            width: 22%;
+        }
+
+        .passed { background-color: #d4edda; color: #155724; }
+        .failed { background-color: #f8d7da; color: #721c24; }
+        .error { background-color: #fff3cd; color: #856404; }
+        .total { background-color: #e2e3e5; color: #383d41; }
+
+        .steps {
+            margin-bottom: 30px;
+        }
+
+        .step {
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            overflow: hidden;
+        }
+
+        .step-header {
+            padding: 10px 15px;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .step-passed { background-color: #d4edda; }
+        .step-failed { background-color: #f8d7da; }
+        .step-error { background-color: #fff3cd; }
+
+        .step-content {
+            padding: 15px;
+            display: none;
+            background-color: #f8f9fa;
+        }
+
+        .step-details {
+            display: flex;
+            flex-wrap: wrap;
+        }
+
+        .detail-section {
+            flex: 1;
+            min-width: 300px;
+            margin-right: 20px;
+            margin-bottom: 20px;
+        }
+
+        .detail-section h4 {
+            border-bottom: 1px solid #ddd;
+            padding-bottom: 5px;
+        }
+
+        pre {
+            background-color: #f1f1f1;
+            padding: 10px;
+            border-radius: 4px;
+            overflow-x: auto;
+            max-height: 300px;
+        }
+
+        .error-section {
+            background-color: #f8d7da;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+
+        .toggle-btn {
+            background: none;
+            border: none;
+            font-size: 1.2em;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>测试报告: {{ execution.test_case.name }}</h1>
+        <p>执行时间: {{ summary.start_time }} | 持续时间: {{ summary.duration|floatformat:3 }}秒</p>
+    </div>
+
+    <div class="summary">
+        <h2>执行概览</h2>
+        <div class="summary-stats">
+            <div class="stat-box total">
+                <h3>总步骤</h3>
+                <p>{{ summary.total }}</p>
+            </div>
+            <div class="stat-box passed">
+                <h3>通过</h3>
+                <p>{{ summary.passed }}</p>
+            </div>
+            <div class="stat-box failed">
+                <h3>失败</h3>
+                <p>{{ summary.failed }}</p>
+            </div>
+            <div class="stat-box error">
+                <h3>错误</h3>
+                <p>{{ summary.error }}</p>
+            </div>
+        </div>
+    </div>
+
+    {% if errors %}
+    <div class="error-section">
+        <h2>全局错误</h2>
+        {% for error in errors %}
+        <pre>{{ error }}</pre>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    <div class="steps">
+        <h2>详细步骤</h2>
+        {% for step in steps %}
+        <div class="step">
+            <div class="step-header step-{{ step.status|lower }}">
+                <div>
+                    <h3>步骤 {{ forloop.counter }}: {{ step.name }}</h3>
+                    <p>API: {{ step.method }} {{ step.api }}</p>
+                </div>
+                <div>
+                    <span class="status-badge">{{ step.status }}</span>
+                    <span>{{ step.duration|floatformat:3 }}秒</span>
+                    <button class="toggle-btn" onclick="toggleStep(this)">▼</button>
+                </div>
+            </div>
+
+            <div class="step-content">
+                <div class="step-details">
+                    <div class="detail-section">
+                        <h4>请求详情</h4>
+                        <pre>{{ step.request|json }}</pre>
+                    </div>
+
+                    <div class="detail-section">
+                        <h4>响应详情</h4>
+                        <pre>{{ step.response|json }}</pre>
+                    </div>
+
+                    {% if step.db_check %}
+                    <div class="detail-section">
+                        <h4>数据库验证</h4>
+                        <pre>{{ step.db_check|json }}</pre>
+                    </div>
+                    {% endif %}
+
+                    {% if step.error %}
+                    <div class="detail-section">
+                        <h4>错误信息</h4>
+                        <pre>{{ step.error }}</pre>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+
+    <script>
+        function toggleStep(btn) {
+            const stepContent = btn.closest('.step-header').nextElementSibling;
+            if (stepContent.style.display === 'block') {
+                stepContent.style.display = 'none';
+                btn.textContent = '▼';
+            } else {
+                stepContent.style.display = 'block';
+                btn.textContent = '▲';
+            }
+        }
+
+        // 自动展开所有失败/错误的步骤
+        document.addEventListener('DOMContentLoaded', function() {
+            const errorSteps = document.querySelectorAll('.step-error, .step-failed');
+            errorSteps.forEach(step => {
+                const btn = step.querySelector('.toggle-btn');
+                if (btn) {
+                    btn.click();
+                }
+            });
+        });
+    </script>
+</body>
+</html>

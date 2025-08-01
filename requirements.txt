@@ -1,0 +1,9 @@
+django==4.2
+djangorestframework==3.14
+django-cors-headers==4.0
+pytest==7.4
+pytest-django==4.5.2
+requests==2.31
+sqlparse==0.4
+celery~=5.5.3
+weasyprint~=66.0

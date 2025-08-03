@@ -45,7 +45,7 @@
       </el-sub-menu>
     </el-menu>
 
-    <!-- 固定在底部的登录状态 -->
+    <!-- 登录状态 -->
     <div class="fixed-footer">
       <div class="user-info">
         <el-icon :color="userStore.isLoggedIn ? '#67c23a' : '#f56c6c'"><User /></el-icon>
@@ -88,7 +88,7 @@ const userStore = useUserStore()
 const menus: MenuItem[] = [
   {
     index: '/home',
-    title: '首页概览',
+    title: '仪表板',
     icon: HomeFilled
   },
   {
@@ -96,8 +96,20 @@ const menus: MenuItem[] = [
     title: '测试管理',
     icon: Folder,
     children: [
-      { index: '/module1', title: '接口测试' },
-      { index: '/module2', title: '用例管理' }
+      { index: '/projects', title: '项目管理' },
+      { index: '/test-cases', title: '测试用例' },
+      { index: '/test-steps', title: '测试步骤' },
+      { index: '/test-executions', title: '测试执行' },
+
+    ]
+  },
+  {
+    index: 'api-management',
+    title: '接口管理',
+    icon: Folder,
+    children: [
+      { index: '/apis', title: '接口列表' },
+      { index: '/environments', title: '环境配置' },
     ]
   },
   {
@@ -105,9 +117,14 @@ const menus: MenuItem[] = [
     title: '系统设置',
     icon: Setting,
     children: [
-      { index: '/settings/users', title: '用户管理' },
-      { index: '/settings/config', title: '配置管理' }
+      { index: '/users', title: '用户管理' },
+      { index: '/roles', title: '权限管理' }
     ]
+  },
+  {
+    index: '/reports',
+    title: '测试结果',
+    icon: Setting,
   }
 ]
 
@@ -121,6 +138,7 @@ const subMenus = computed(() => menus.filter(menu => menu.children))
   display: flex;
   flex-direction: column;
   height: 100vh;
+  width: 100%;
   border-right: 1px solid #e6e6e6;
   background-color: #ffffff;
 }

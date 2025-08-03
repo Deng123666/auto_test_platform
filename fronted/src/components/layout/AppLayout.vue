@@ -1,7 +1,7 @@
 <template>
   <el-container class="h-screen">
     <!-- 侧边栏区域 -->
-    <el-aside width="auto">
+    <el-aside width=170px>
       <Sidebar />
     </el-aside>
 

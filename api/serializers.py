@@ -1,6 +1,5 @@
 from rest_framework import serializers
-from .models import Project
-    # Environment, API, TestCase, TestStep, TestExecution
+from .models import Project, Environment, API, TestCase, TestStep, TestExecution
 from rest_framework import serializers
 # from .models import User
 
@@ -11,41 +10,40 @@ class ProjectSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
 
-# class EnvironmentSerializer(serializers.ModelSerializer):
-#     class Meta:
-#         model = Environment
-#         fields = '__all__'
-#         read_only_fields = ('created_at',)
+class EnvironmentSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Environment
+        fields = '__all__'
+        read_only_fields = ('created_at',)
+
 #
-#
-# class APISerializer(serializers.ModelSerializer):
-#     class Meta:
-#         model = API
-#         fields = '__all__'
-#         read_only_fields = ('created_at',)
-#
-#
-# class TestStepSerializer(serializers.ModelSerializer):
-#     class Meta:
-#         model = TestStep
-#         fields = '__all__'
-#         read_only_fields = ('created_at',)
-#
-#
-# class TestCaseSerializer(serializers.ModelSerializer):
-#     steps = TestStepSerializer(many=True, read_only=True)
-#
-#     class Meta:
-#         model = TestCase
-#         fields = '__all__'
-#         read_only_fields = ('created_at', 'updated_at')
-#
-#
-# class TestExecutionSerializer(serializers.ModelSerializer):
-#     class Meta:
-#         model = TestExecution
-#         fields = '__all__'
-#         read_only_fields = ('start_time', 'duration', 'report', 'created_at')
+class APISerializer(serializers.ModelSerializer):
+    class Meta:
+        model = API
+        fields = '__all__'
+        read_only_fields = ('created_at',)
+
+
+class TestStepSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = TestStep
+        fields = '__all__'
+        read_only_fields = ('created_at',)
+
+
+class TestCaseSerializer(serializers.ModelSerializer):
+    steps = TestStepSerializer(many=True, read_only=True)
+    class Meta:
+        model = TestCase
+        fields = '__all__'
+        read_only_fields = ('created_at', 'updated_at')
+
+
+class TestExecutionSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = TestExecution
+        fields = '__all__'
+        read_only_fields = ('start_time', 'duration', 'report', 'created_at')
 
 
 # class UserProfileSerializer(serializers.ModelSerializer):

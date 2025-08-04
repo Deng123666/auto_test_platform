@@ -18,6 +18,17 @@ export const fetchProjects = async (p0: { search: string; }) => {
   }
 };
 
+// 添加获取单个项目详情的API方法
+export const fetchProjectDetail = async (projectId: number) => {
+  try {
+    const response = await api.get('/projects/${projectId}/');
+    return response.data;
+  } catch (error) {
+    console.error('获取项目详情失败:', error);
+    throw error;
+  }
+};
+
 // 其他项目相关API可以继续在这里添加
 export const createProject = async (projectData: { name: string; description: string; }) => {
   try {

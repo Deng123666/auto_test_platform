@@ -7,10 +7,11 @@ const api = axios.create({
 });
 
 // 获取测试用例列表（支持按项目过滤）
-export const fetchTestCases = async (projectId?: number) => {
+export const fetchTestCases = async (projectId: number) => {
   try {
     const params = projectId ? { project: projectId } : {};
     const response = await api.get('/test-cases/', { params });
+    console.log(response)
     return response.data;
   } catch (error) {
     console.error('获取测试用例列表失败:', error);
@@ -29,6 +30,8 @@ export const createTestCase = async (testCaseData: {
 }) => {
   try {
     const response = await api.post('/test-cases/', testCaseData);
+    console.log(response)
+
     return response.data;
   } catch (error) {
     console.error('创建测试用例失败:', error);

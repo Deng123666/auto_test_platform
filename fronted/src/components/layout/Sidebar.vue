@@ -76,7 +76,8 @@ import {
   HomeFilled,
   Folder,
   Setting,
-  User
+  User,
+  List
 } from '@element-plus/icons-vue'
 import { useUserStore } from '@/stores/user'
 import type { MenuItem } from '@/types'
@@ -92,34 +93,19 @@ const menus: MenuItem[] = [
     icon: HomeFilled
   },
   {
-    index: 'test-management',
-    title: '测试管理',
+    index: '/projects',
+    title: '项目管理',
     icon: Folder,
-    children: [
-      { index: '/projects', title: '项目管理' },
-      { index: '/test-cases', title: '测试用例' },
-      { index: '/test-steps', title: '测试步骤' },
-      { index: '/test-executions', title: '测试执行' },
-
-    ]
   },
   {
-    index: 'api-management',
-    title: '接口管理',
-    icon: Folder,
-    children: [
-      { index: '/apis', title: '接口列表' },
-      { index: '/environments', title: '环境配置' },
-    ]
+    index: '/test-cases',
+    title: '用例管理',
+    icon: List,
   },
   {
-    index: 'system-settings',
-    title: '系统设置',
-    icon: Setting,
-    children: [
-      { index: '/users', title: '用户管理' },
-      { index: '/roles', title: '权限管理' }
-    ]
+    index: '/test-execution',
+    title: '自动化测试',
+    icon: Folder,
   },
   {
     index: '/reports',

@@ -34,3 +34,30 @@ export interface MenuItem {
   children?: MenuItem[];     // 子菜单项
   routeName?: string;        // 路由名称
 }
+
+// 项目类型
+export interface Project {
+  id: number;
+  name: string;
+  description: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+// 测试用例类型
+export interface TestCase {
+  id: number;
+  name: string;
+  description: string | null;
+  created_at: string;
+  updated_at: string;
+  project?: number; // 关联的项目ID
+}
+
+// API响应类型
+export interface ApiResponse<T> {
+  count: number;
+  next: string | null;
+  previous: string | null;
+  results: T[];
+}

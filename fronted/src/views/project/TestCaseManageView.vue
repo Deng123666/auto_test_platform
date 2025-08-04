@@ -1,10 +1,9 @@
 <template>
   <div class="projects-container">
     <div class="page-header">
-      <h1 class="page-title">{{ projectName }} 用例管理</h1>
+      <el-link class="page-title" @click="goToLastPage">{{ projectName }} 用例管理</el-link>
       <el-button
         type="primary"
-
         @click="handleAddTestCase"
         class="add-btn"
       >添加用例</el-button>
@@ -159,47 +158,28 @@
 </template>
 
 <script lang="ts">
-// 保持原有的script逻辑完全不变
-import { defineComponent, onMounted, ref, reactive, toRefs } from 'vue';
-// import { fetchProjects, createProject, updateProject, deleteProject } from '@/api/projects';
-import { ElMessage, ElMessageBox } from 'element-plus';
-import { useRouter, useRoute } from 'vue-router';
+import { defineComponent, onMounted, ref, reactive } from 'vue';
+import { ElMessage } from 'element-plus';
+import { useRoute, useRouter } from 'vue-router';
 import { Folder, Warning, FolderDelete } from '@element-plus/icons-vue';
-import { createTestCase, deleteTestCase, fetchTestCases, updateTestCase } from '@/api/test_cases';
-
-interface TestCases {
-  id: number;
-  name: string;
-  description: string | null;
-  created_at: string;
-  updated_at: string;
-}
-
-interface ApiResponse {
-  count: number;
-  next: string | null;
-  previous: string | null;
-  results: TestCases[];
-}
+import { useTestCaseStore } from '@/stores/testCase';
+import type { TestCase } from '@/types';
 
 export default defineComponent({
-  name: 'ProjectsView',
+  name: 'TestCaseManageView',
   components: {
     Folder,
     Warning,
     FolderDelete
   },
   setup() {
-    // 原有的setup逻辑保持完全不变
-    // const router = useRouter();
+    const testCaseStore = useTestCaseStore();
     const route = useRoute();
+    const router = useRouter();
 
-    const testCases = ref<TestCases[]>([]);
     const projectId = Number(route.params.projectId);
-    const projectName = ref(history.state?.projectName || "")
-    console.log(projectId)
-    const loading = ref(false);
-    const error = ref('');
+    const projectName = ref(history.state?.projectName || "");
+
     const dialogVisible = ref(false);
     const deleteDialogVisible = ref(false);
     const testCaseFormRef = ref();
@@ -210,16 +190,7 @@ export default defineComponent({
     const deleteProjectName = ref('');
     const deleteProjectId = ref(0);
 
-    const router = useRouter();
-    // const goToProjectDetail = (project: Project) => {
-    //   router.push({
-    //     name: 'Cases',
-    //     params: { projectId: project.id },
-    //     state: { projectName: project.name }
-    //   });
-    // };
-
-    const formTestCase = reactive<TestCases>({
+    const formTestCase = reactive<TestCase>({
       id: 0,
       name: '',
       description: '',
@@ -237,21 +208,6 @@ export default defineComponent({
       ]
     };
 
-    const getTestCases = async () => {
-      loading.value = true;
-      error.value = '';
-      try {
-        const response: ApiResponse = await fetchTestCases(projectId);
-        // projects.value = response.results;
-         testCases.value = response.results.sort((a, b) => a.id - b.id);
-      } catch (err) {
-        error.value = '获取用例列表失败，请稍后重试';
-        console.error(err);
-      } finally {
-        loading.value = false;
-      }
-    };
-
     const handleAddTestCase = () => {
       isEditMode.value = false;
       formTestCase.id = 0;
@@ -263,7 +219,7 @@ export default defineComponent({
       }
     };
 
-    const handleEdit = (testCase: TestCases) => {
+    const handleEdit = (testCase: TestCase) => {
       isEditMode.value = true;
       currentEditId.value = testCase.id;
       formTestCase.id = testCase.id;
@@ -277,110 +233,81 @@ export default defineComponent({
       }
     };
 
-    const handleDelete = (testCase: TestCases) => {
+    const handleDelete = (testCase: TestCase) => {
       deleteProjectId.value = testCase.id;
       deleteProjectName.value = testCase.name;
       deleteDialogVisible.value = true;
     };
 
-    // const submitTestCaseForm = async () => {
-    //   if (!testCaseFormRef.value) return;
-
-    //   try {
-    //     await testCaseFormRef.value.validate();
-    //     submitLoading.value = true;
-
-    //     if (isEditMode.value) {
-    //       await updateTestCase(formTestCase.id, {
-    //         name: formTestCase.name,
-    //         description: formTestCase.description
-    //       });
-    //       ElMessage.success('用例更新成功');
-    //     } else {
-    //       await createTestCase({
-    //         name: formTestCase.name,
-    //         description: formTestCase.description
-    //       });
-    //       ElMessage.success('用例创建成功');
-    //     }
-
-    //     dialogVisible.value = false;
-    //     getTestCases();
-    //   } catch (err) {
-    //     if (err === false) {
-    //       return;
-    //     }
-    //     error.value = isEditMode.value ? '更新用例失败，请稍后重试' : '创建用例失败，请稍后重试';
-    //     console.error(err);
-    //   } finally {
-    //     submitLoading.value = false;
-    //   }
-    // };
     const submitTestCaseForm = async () => {
-    if (!testCaseFormRef.value) return;
+      if (!testCaseFormRef.value) return;
 
-    try {
-      await testCaseFormRef.value.validate();
-      submitLoading.value = true;
+      try {
+        await testCaseFormRef.value.validate();
+        submitLoading.value = true;
 
-      if (isEditMode.value) {
-        await updateTestCase(formTestCase.id, {
-          name: formTestCase.name,
-          description: formTestCase.description,
-          project: projectId
-        });
-        ElMessage.success('用例更新成功');
-      } else {
-        await createTestCase({
-          name: formTestCase.name,
-          description: formTestCase.description,
-          project: projectId
-        });
-        ElMessage.success('用例创建成功');
+        if (isEditMode.value) {
+          await testCaseStore.updateTestCase(formTestCase.id, {
+            name: formTestCase.name,
+            description: formTestCase.description,
+            project: projectId
+          });
+          ElMessage.success('用例更新成功');
+        } else {
+          await testCaseStore.createTestCase({
+            name: formTestCase.name,
+            description: formTestCase.description,
+            project: projectId
+          });
+          ElMessage.success('用例创建成功');
+        }
+
+        dialogVisible.value = false;
+      } catch (err) {
+        if (err === false) return;
+        const errorMsg = isEditMode.value ? '更新用例失败，请稍后重试' : '创建用例失败，请稍后重试';
+        ElMessage.error(errorMsg);
+        console.error(err);
+      } finally {
+        submitLoading.value = false;
       }
-
-      dialogVisible.value = false;
-      getTestCases();
-    } catch (err) {
-      if (err === false) {
-        return;
-      }
-      const errorMsg = isEditMode.value ? '更新用例失败，请稍后重试' : '创建用例失败，请稍后重试';
-      error.value = errorMsg;
-      ElMessage.error(errorMsg);
-      console.error(err);
-    } finally {
-      submitLoading.value = false;
-    }
-  };
+    };
 
     const confirmDelete = async () => {
       deleteLoading.value = true;
       try {
-        await deleteTestCase(deleteProjectId.value);
+        await testCaseStore.deleteTestCase(deleteProjectId.value, projectId);
         deleteDialogVisible.value = false;
-        getTestCases();
         ElMessage.success('用例删除成功');
       } catch (err) {
-        error.value = '删除用例失败，请稍后重试';
         console.error(err);
       } finally {
         deleteLoading.value = false;
       }
     };
 
+    const goToLastPage = async () => {
+      router.push({
+        name: 'projects',
+      })
+    }
+
     const formatDate = (dateString: string) => {
       return new Date(dateString).toLocaleString();
     };
 
+    const getTestCases = async (project: number) => {
+      await testCaseStore.getTestCases(project);
+    };
+
     onMounted(() => {
-      getTestCases();
+      getTestCases(projectId);
     });
 
     return {
-      testCases,
-      loading,
-      error,
+      testCases: testCaseStore.testCases,
+      loading: testCaseStore.loading,
+      error: testCaseStore.error,
       dialogVisible,
       deleteDialogVisible,
       testCaseFormRef,
@@ -398,10 +325,12 @@ export default defineComponent({
       confirmDelete,
       formatDate,
       getTestCases,
+      goToLastPage,
     };
   }
 });
 </script>
+
 
 <style scoped>
 .projects-container {

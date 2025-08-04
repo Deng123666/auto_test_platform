@@ -4,7 +4,6 @@
       <h1 class="page-title">项目管理</h1>
       <el-button
         type="primary"
-
         @click="handleAddProject"
         class="add-btn"
       >添加项目</el-button>
@@ -12,7 +11,7 @@
 
     <el-card class="modern-card">
       <div v-if="projects.length === 0 && !loading" class="empty-state" style="height: 720px;">
-        <el-icon :size="64" color="#C0C4CC"><FolderDelete /></el-icon>
+        <el-icon :size="100" color="#C0C4CC"><FolderDelete /></el-icon>
         <p class="empty-text">空空如也~</p>
         <el-button type="primary" @click="handleAddProject">创建第一个项目</el-button>
       </div>
@@ -69,15 +68,11 @@
           <template #default="scope">
             <el-button
               type="primary"
-
-
               @click="handleEdit(scope.row)"
               class="action-btn edit-btn"
             >编辑</el-button>
             <el-button
               type="danger"
-
-
               @click="handleDelete(scope.row)"
               class="action-btn"
             >删除</el-button>
@@ -159,27 +154,12 @@
 </template>
 
 <script lang="ts">
-// 保持原有的script逻辑完全不变
-import { defineComponent, onMounted, ref, reactive, toRefs } from 'vue';
-import { fetchProjects, createProject, updateProject, deleteProject } from '@/api/projects';
-import { ElMessage, ElMessageBox } from 'element-plus';
+import { defineComponent, onMounted, ref, reactive } from 'vue';
+import { ElMessage } from 'element-plus';
 import { useRouter } from 'vue-router';
 import { Folder, Warning, FolderDelete } from '@element-plus/icons-vue';
-
-interface Project {
-  id: number;
-  name: string;
-  description: string | null;
-  created_at: string;
-  updated_at: string;
-}
-
-interface ApiResponse {
-  count: number;
-  next: string | null;
-  previous: string | null;
-  results: Project[];
-}
+import { useProjectStore } from '@/stores/project';
+import type { Project } from '@/types';
 
 export default defineComponent({
   name: 'ProjectsView',
@@ -189,10 +169,9 @@ export default defineComponent({
     FolderDelete
   },
   setup() {
-    // 原有的setup逻辑保持完全不变
-    const projects = ref<Project[]>([]);
-    const loading = ref(false);
-    const error = ref('');
+    const projectStore = useProjectStore();
+    const router = useRouter();
+
     const dialogVisible = ref(false);
     const deleteDialogVisible = ref(false);
     const projectFormRef = ref();
@@ -203,7 +182,6 @@ export default defineComponent({
     const deleteProjectName = ref('');
     const deleteProjectId = ref(0);
 
-    const router = useRouter();
     const goToProjectDetail = (project: Project) => {
       router.push({
         name: 'CaseManage',
@@ -228,21 +206,6 @@ export default defineComponent({
       description: [
         { max: 200, message: '项目描述不能超过200个字符', trigger: 'blur' }
       ]
-    };
-
-    const getProjects = async () => {
-      loading.value = true;
-      error.value = '';
-      try {
-        const response: ApiResponse = await fetchProjects();
-        // projects.value = response.results;
-         projects.value = response.results.sort((a, b) => a.id - b.id);
-      } catch (err) {
-        error.value = '获取项目列表失败，请稍后重试';
-        console.error(err);
-      } finally {
-        loading.value = false;
-      }
     };
 
     const handleAddProject = () => {
@@ -284,13 +247,13 @@ export default defineComponent({
         submitLoading.value = true;
 
         if (isEditMode.value) {
-          await updateProject(formProject.id, {
+          await projectStore.updateProject(formProject.id, {
             name: formProject.name,
             description: formProject.description
           });
           ElMessage.success('项目更新成功');
         } else {
-          await createProject({
+          await projectStore.createProject({
             name: formProject.name,
             description: formProject.description
           });
@@ -298,12 +261,10 @@ export default defineComponent({
         }
 
         dialogVisible.value = false;
-        getProjects();
       } catch (err) {
         if (err === false) {
           return;
         }
-        error.value = isEditMode.value ? '更新项目失败，请稍后重试' : '创建项目失败，请稍后重试';
         console.error(err);
       } finally {
         submitLoading.value = false;
@@ -313,12 +274,10 @@ export default defineComponent({
     const confirmDelete = async () => {
       deleteLoading.value = true;
       try {
-        await deleteProject(deleteProjectId.value);
+        await projectStore.deleteProject(deleteProjectId.value);
         deleteDialogVisible.value = false;
-        getProjects();
         ElMessage.success('项目删除成功');
       } catch (err) {
-        error.value = '删除项目失败，请稍后重试';
         console.error(err);
       } finally {
         deleteLoading.value = false;
@@ -330,13 +289,13 @@ export default defineComponent({
     };
 
     onMounted(() => {
-      getProjects();
+      projectStore.getProjects();
     });
 
     return {
-      projects,
-      loading,
-      error,
+      projects: projectStore.projects,
+      loading: projectStore.loading,
+      error: projectStore.error,
       dialogVisible,
       deleteDialogVisible,
       projectFormRef,
@@ -352,7 +311,6 @@ export default defineComponent({
       submitProjectForm,
       confirmDelete,
       formatDate,
-      getProjects,
       goToProjectDetail,
     };
   }

@@ -2,12 +2,19 @@
   <div class="projects-container">
     <div class="page-header">
       <h1 class="page-title"> 用例管理</h1>
-      <el-button
-        type="primary"
-
-        @click="handleAddTestCase"
-        class="add-btn"
-      >添加用例</el-button>
+      <div class="search-container">
+        <el-input
+          v-model="searchQuery"
+          placeholder="请输入关键词搜索用例..."
+          clearable
+          style="width: 300px; margin-right: 16px;"
+        />
+        <el-button
+          type="primary"
+          @click="handleAddTestCase"
+          class="add-btn"
+        >添加用例</el-button>
+      </div>
     </div>
     <el-alert v-if="error" :message="error" type="error" show-icon style="margin-bottom: 16px;"> 添加失败，请重试 </el-alert>
     <el-card class="modern-card">
@@ -20,7 +27,7 @@
       <el-table
         v-else
         v-loading="loading"
-        :data="testCases"
+        :data="filteredTestCases"
         stripe
         style="width: 100%"
         class="modern-table"
@@ -172,7 +179,7 @@
 
 <script lang="ts">
 // 保持原有的script逻辑完全不变
-import { defineComponent, onMounted, ref, reactive, toRefs } from 'vue';
+import { defineComponent, onMounted, ref, reactive, toRefs, computed } from 'vue';
 // import { fetchProjects, createProject, updateProject, deleteProject } from '@/api/projects';
 import { ElMessage, ElMessageBox } from 'element-plus';
 import { useRouter, useRoute } from 'vue-router';
@@ -228,6 +235,7 @@ export default defineComponent({
     const currentEditId = ref(0);
     const deleteProjectName = ref('');
     const deleteProjectId = ref(0);
+    const searchQuery = ref(''); // 搜索关键词
 
     const router = useRouter();
     // const goToProjectDetail = (project: Project) => {
@@ -368,6 +376,17 @@ export default defineComponent({
       }
     };
 
+    // 添加搜索过滤计算属性
+    const filteredTestCases = computed(() => {
+      const query = searchQuery.value.toLowerCase().trim();
+      if (!query) return testCases.value;
+      return testCases.value.filter(testCase =>
+        testCase.name.toLowerCase().includes(query) ||
+        (testCase.description && testCase.description.toLowerCase().includes(query)) ||
+        testCase.projectName.toLowerCase().includes(query)
+      );
+    });
+
     const formatDate = (dateString: string) => {
       return new Date(dateString).toLocaleString();
     };
@@ -378,6 +397,8 @@ export default defineComponent({
 
     return {
       testCases,
+      filteredTestCases,
+      searchQuery,
       loading,
       error,
       dialogVisible,

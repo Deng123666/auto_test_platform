@@ -75,9 +75,10 @@ import { useRoute } from 'vue-router'
 import {
   HomeFilled,
   Folder,
-  Setting,
+  CircleCheckFilled,
   User,
-  List
+  List,
+  Calendar
 } from '@element-plus/icons-vue'
 import { useUserStore } from '@/stores/user'
 import type { MenuItem } from '@/types'
@@ -100,17 +101,17 @@ const menus: MenuItem[] = [
   {
     index: '/test-cases',
     title: '用例管理',
-    icon: List,
+    icon: CircleCheckFilled,
   },
   {
     index: '/test-execution',
     title: '自动化测试',
-    icon: Folder,
+    icon: Calendar,
   },
   {
     index: '/reports',
     title: '测试结果',
-    icon: Setting,
+    icon: List,
   }
 ]
 

@@ -1,7 +1,7 @@
 <template>
   <div class="projects-container">
     <div class="page-header">
-      <h1 class="page-title"> 用例管理</h1>
+      <h1 class="page-title">{{ projectName }} 用例管理</h1>
       <el-button
         type="primary"
 
@@ -50,18 +50,6 @@
               </el-tooltip>
             </div>
           </template>
-        </el-table-column>
-        <el-table-column prop="projectName" label="项目" align="left">
-          <template #default="scope">
-            <div class="description-cell">
-              <el-tooltip
-                :content="scope.row.projectName || '无项目'"
-                placement="top"
-              >
-                <span>{{ scope.row.projectName || '—' }}</span>
-              </el-tooltip>
-            </div>
-           </template>
         </el-table-column>
         <el-table-column prop="created_at" label="创建时间" width="180" align="left">
           <template #default="scope">
@@ -178,7 +166,6 @@ import { ElMessage, ElMessageBox } from 'element-plus';
 import { useRouter, useRoute } from 'vue-router';
 import { Folder, Warning, FolderDelete } from '@element-plus/icons-vue';
 import { createTestCase, deleteTestCase, fetchTestCases, updateTestCase } from '@/api/test_cases';
-import { fetchProjects } from '@/api/projects';
 
 interface TestCases {
   id: number;
@@ -186,13 +173,6 @@ interface TestCases {
   description: string | null;
   created_at: string;
   updated_at: string;
-  project: number,
-  projectName: string,
-}
-
-interface Project {
-  id: number,
-  name: string
 }
 
 interface ApiResponse {
@@ -215,8 +195,9 @@ export default defineComponent({
     const route = useRoute();
 
     const testCases = ref<TestCases[]>([]);
-    const projectName = ref('');
-    const projects = ref<Project[]>([]);
+    const projectId = Number(route.params.projectId);
+    const projectName = ref(history.state?.projectName || "")
+    console.log(projectId)
     const loading = ref(false);
     const error = ref('');
     const dialogVisible = ref(false);
@@ -244,8 +225,6 @@ export default defineComponent({
       description: '',
       created_at: '',
       updated_at: '',
-      project: 0,
-      projectName: '',
     });
 
     const formRules = {
@@ -262,20 +241,9 @@ export default defineComponent({
       loading.value = true;
       error.value = '';
       try {
-         // 先获取所有项目
-        const projectsResponse = await fetchProjects();
-        projects.value = projectsResponse.results;
-
-        // 创建项目ID到名称的映射
-        const projectMap = new Map(projects.value.map(p => [p.id, p.name]));
-
-        // 获取测试用例数据
-        const response: ApiResponse = await fetchTestCases();
-        // 为每个测试用例添加projectName
-        testCases.value = response.results.map(caseItem => ({
-          ...caseItem,
-          projectName: projectMap.get(caseItem.project) || '未知项目'
-        })).sort((a, b) => a.id - b.id);
+        const response: ApiResponse = await fetchTestCases(projectId);
+        // projects.value = response.results;
+         testCases.value = response.results.sort((a, b) => a.id - b.id);
       } catch (err) {
         error.value = '获取用例列表失败，请稍后重试';
         console.error(err);
@@ -315,6 +283,39 @@ export default defineComponent({
       deleteDialogVisible.value = true;
     };
 
+    // const submitTestCaseForm = async () => {
+    //   if (!testCaseFormRef.value) return;
+
+    //   try {
+    //     await testCaseFormRef.value.validate();
+    //     submitLoading.value = true;
+
+    //     if (isEditMode.value) {
+    //       await updateTestCase(formTestCase.id, {
+    //         name: formTestCase.name,
+    //         description: formTestCase.description
+    //       });
+    //       ElMessage.success('用例更新成功');
+    //     } else {
+    //       await createTestCase({
+    //         name: formTestCase.name,
+    //         description: formTestCase.description
+    //       });
+    //       ElMessage.success('用例创建成功');
+    //     }
+
+    //     dialogVisible.value = false;
+    //     getTestCases();
+    //   } catch (err) {
+    //     if (err === false) {
+    //       return;
+    //     }
+    //     error.value = isEditMode.value ? '更新用例失败，请稍后重试' : '创建用例失败，请稍后重试';
+    //     console.error(err);
+    //   } finally {
+    //     submitLoading.value = false;
+    //   }
+    // };
     const submitTestCaseForm = async () => {
     if (!testCaseFormRef.value) return;
 
@@ -326,14 +327,14 @@ export default defineComponent({
         await updateTestCase(formTestCase.id, {
           name: formTestCase.name,
           description: formTestCase.description,
-          project: formTestCase.project
+          project: projectId
         });
         ElMessage.success('用例更新成功');
       } else {
         await createTestCase({
           name: formTestCase.name,
           description: formTestCase.description,
-          project: formTestCase.project
+          project: projectId
         });
         ElMessage.success('用例创建成功');
       }

@@ -206,7 +206,7 @@ export default defineComponent({
     const router = useRouter();
     const goToProjectDetail = (project: Project) => {
       router.push({
-        name: 'Cases',
+        name: 'CaseManage',
         params: { projectId: project.id },
         state: { projectName: project.name }
       });

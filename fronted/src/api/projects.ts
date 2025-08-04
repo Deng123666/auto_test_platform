@@ -8,7 +8,7 @@ const api = axios.create({
 });
 
 // 获取项目列表
-export const fetchProjects = async (p0: { search: string; }) => {
+export const fetchProjects = async () => {
   try {
     const response = await api.get('/projects');
     return response.data;

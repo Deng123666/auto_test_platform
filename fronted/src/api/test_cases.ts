@@ -7,7 +7,7 @@ const api = axios.create({
 });
 
 // 获取测试用例列表（支持按项目过滤）
-export const fetchTestCases = async (projectId: number) => {
+export const fetchTestCases = async (projectId?: number) => {
   try {
     const params = projectId ? { project: projectId } : {};
     const response = await api.get('/test-cases/', { params });

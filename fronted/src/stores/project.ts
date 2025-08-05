@@ -1,6 +1,7 @@
 import { defineStore } from 'pinia';
 import { fetchProjects, createProject, updateProject, deleteProject } from '@/api/projects';
-import type { Project } from '@/views/project/ProjectsView.vue';
+import type { Project } from '@/types';
+import { ElMessage } from 'element-plus';
 
 export const useProjectStore = defineStore('project', {
   state: () => ({
@@ -8,16 +9,19 @@ export const useProjectStore = defineStore('project', {
     loading: false,
     error: '',
   }),
+  persist: true,
   actions: {
-    async getProjects() {
+     async getProjects() {
       this.loading = true;
       this.error = '';
       try {
         const response = await fetchProjects();
-        this.projects = response.results.sort((a, b) => a.id - b.id);
+        this.projects = response.results.sort((a: { id: number; }, b: { id: number; }) => a.id - b.id);
+        console.log('项目数据加载成功:', this.projects);
       } catch (err) {
         this.error = '获取项目列表失败，请稍后重试';
         console.error(err);
+        ElMessage.error(this.error);
       } finally {
         this.loading = false;
       }
@@ -60,3 +64,4 @@ export const useProjectStore = defineStore('project', {
     }
   }
 });
+

@@ -3,10 +3,10 @@ import type { RouteRecordRaw } from 'vue-router'
 import AppLayout from '@/components/layout/AppLayout.vue'
 import Home from '@/views/Home.vue'
 import ProjectsView from '@/views/project/ProjectsView.vue'
-import TestCaseView from '@/views/project/TestCaseView.vue'
-import ProjectDetailView from '@/views/project/CaseDetailView.vue'
-import CaseDetailView from '@/views/project/CaseDetailView.vue'
-import TestCaseManageView from '@/views/project/TestCaseManageView.vue'
+import TestCaseView from '@/views/test-case/TestCaseView.vue'
+import ProjectDetailView from '@/views/test-case/CaseDetailView.vue'
+import CaseDetailView from '@/views/test-case/CaseDetailView.vue'
+import TestCaseManageView from '@/views/test-case/TestCaseManageView.vue'
 
 const routes: Array<RouteRecordRaw> = [
   {
@@ -16,15 +16,14 @@ const routes: Array<RouteRecordRaw> = [
       { path: '/', redirect: '/home' },
       { path: '/home', name: 'Home', component: Home },
       { path: '/projects/', name: 'projects', component: ProjectsView },
-      // {
-      //   path: '/project/:projectId/detail',
-      //   name: 'CaseDetail',
-      //   component: ProjectDetailView,
-      //   props: true // 允许通过params传递projectId
-      // },
+      { path: '/project/:projectId/', name: 'ProjectDetailCases', component: TestCaseView, props: true },
       { path: '/test-cases-manage/:projectId', name: 'CaseManage', component: TestCaseManageView, props: true },
       { path: '/test-cases/', name: 'Cases', component: TestCaseView },
-      { path: '/test-cases-detial/:projectId', name: 'CaseDetail', component: CaseDetailView, props: true },
+      { path: '/test-cases-detial/:testCaseId', name: 'CaseDetail', component: CaseDetailView,
+        props: (route) => ({
+          testCaseId: route.params.testCaseId,
+          ...(route.state? route.state : {})
+        }) },
       { path: '/test-steps/', name: 'Steps', component: ProjectsView },
       { path: '/test-executions/', name: 'Executions', component: ProjectsView },
       { path: '/apis/', name: 'Apis', component: ProjectsView },

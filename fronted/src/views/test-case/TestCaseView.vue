@@ -38,7 +38,7 @@
           <template #default="scope">
             <el-link
               type="primary"
-              @click=""
+              @click="goToTestCaseDetail(scope.row)"
               class="project-link"
             >
               <el-icon class="link-icon"><Folder /></el-icon>
@@ -186,6 +186,7 @@ import { useRouter, useRoute } from 'vue-router';
 import { Folder, Warning, FolderDelete } from '@element-plus/icons-vue';
 import { createTestCase, deleteTestCase, fetchTestCases, updateTestCase } from '@/api/test_cases';
 import { fetchProjects } from '@/api/projects';
+import type { id } from 'element-plus/es/locales.mjs';
 
 interface TestCases {
   id: number;
@@ -270,7 +271,7 @@ export default defineComponent({
       loading.value = true;
       error.value = '';
       try {
-         // 先获取所有项目
+        // 先获取所有项目
         const projectsResponse = await fetchProjects();
         projects.value = projectsResponse.results;
 
@@ -279,11 +280,18 @@ export default defineComponent({
 
         // 获取测试用例数据
         const response: ApiResponse = await fetchTestCases();
-        // 为每个测试用例添加projectName
+
+        // 获取路由中的projectId参数
+        const projectId = route.params.projectId;
+
+        // 为每个测试用例添加projectName并根据projectId过滤
         testCases.value = response.results.map(caseItem => ({
           ...caseItem,
           projectName: projectMap.get(caseItem.project) || '未知项目'
-        })).sort((a, b) => a.id - b.id);
+        }))
+        // 添加projectId过滤逻辑
+        .filter(caseItem => !projectId || caseItem.project === Number(projectId))
+        .sort((a, b) => a.id - b.id);
       } catch (err) {
         error.value = '获取用例列表失败，请稍后重试';
         console.error(err);
@@ -387,6 +395,14 @@ export default defineComponent({
       );
     });
 
+    const goToTestCaseDetail = (testCase: TestCases) => {
+      router.push({
+        name: 'CaseDetail',
+        params: { testCaseId: testCase.id },
+        state: { testCaseName: testCase.name }
+      });
+    };
+
     const formatDate = (dateString: string) => {
       return new Date(dateString).toLocaleString();
     };
@@ -418,6 +434,7 @@ export default defineComponent({
       confirmDelete,
       formatDate,
       getTestCases,
+      goToTestCaseDetail,
     };
   }
 });

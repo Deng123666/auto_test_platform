@@ -125,7 +125,7 @@ export default defineComponent({
 
     // 返回项目列表
     const goBack = () => {
-      router.push({ name: 'projects' });
+      router.push({ name: 'Cases' });
     };
 
     // 保存项目名称

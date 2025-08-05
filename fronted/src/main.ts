@@ -2,6 +2,7 @@ import './assets/main.css'
 
 import { createApp } from 'vue'
 import { createPinia } from 'pinia'
+import piniaPluginPersistedstate from 'pinia-plugin-persistedstate'
 
 import App from './App.vue'
 import router from './router'
@@ -12,7 +13,7 @@ import locale from 'element-plus/es/locale/lang/zh-cn'
 
 const app = createApp(App)
 
-app.use(createPinia())
+app.use(createPinia().use(piniaPluginPersistedstate))
 app.use(router)
 app.use(ElementPlus, { locale })  // 添加 Element Plus 使用
 

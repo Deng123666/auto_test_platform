@@ -181,10 +181,11 @@ export default defineComponent({
     const currentEditId = ref(0);
     const deleteProjectName = ref('');
     const deleteProjectId = ref(0);
+    const isInitialized = ref(false);
 
     const goToProjectDetail = (project: Project) => {
       router.push({
-        name: 'CaseManage',
+        name: 'ProjectDetailCases',
         params: { projectId: project.id },
         state: { projectName: project.name }
       });
@@ -288,9 +289,17 @@ export default defineComponent({
       return new Date(dateString).toLocaleString();
     };
 
-    onMounted(() => {
-      projectStore.getProjects();
-    });
+    onMounted(async () => {
+    // 如果已有持久化数据且未初始化，直接使用
+    if (projectStore.projects.length > 0 && !isInitialized.value) {
+      isInitialized.value = true;
+      return;
+    }
+
+    // 否则重新加载数据
+    await projectStore.getProjects();
+    isInitialized.value = true;
+  });
 
     return {
       projects: projectStore.projects,

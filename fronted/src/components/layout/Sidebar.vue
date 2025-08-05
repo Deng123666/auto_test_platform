@@ -104,7 +104,7 @@ const menus: MenuItem[] = [
     icon: CircleCheckFilled,
   },
   {
-    index: '/test-execution',
+    index: '/test-executions',
     title: '自动化测试',
     icon: Calendar,
   },
@@ -136,10 +136,11 @@ const subMenus = computed(() => menus.filter(menu => menu.children))
 }
 
 .menu-item, .sub-menu-item {
-  height: 48px;
-  line-height: 48px;
-  margin: 4px 0;
+  height: 80px;
+  line-height: 80px;
+  margin: 0px 0;
   border-radius: 4px;
+  font-size: 16px;
 }
 
 .menu-item:hover, .sub-menu-item:hover {

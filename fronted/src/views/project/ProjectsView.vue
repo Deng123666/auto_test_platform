@@ -187,7 +187,7 @@ export default defineComponent({
       router.push({
         name: 'ProjectDetailCases',
         params: { projectId: project.id },
-        state: { projectName: project.name }
+        query: { projectName: project.name }
       });
     };
 

@@ -1,4 +1,4 @@
-<template>
+<!-- <template>
   <div class="projects-container">
     <div class="page-header">
       <el-link class="page-title" @click="goToLastPage">{{ projectName }} 用例管理</el-link>
@@ -511,4 +511,4 @@ export default defineComponent({
 .danger-btn:hover {
   box-shadow: 0 6px 12px rgba(244, 63, 94, 0.25);
 }
-</style>
+</style> -->

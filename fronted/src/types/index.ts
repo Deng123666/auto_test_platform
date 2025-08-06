@@ -51,7 +51,8 @@ export interface TestCase {
   description: string | null;
   created_at: string;
   updated_at: string;
-  project?: number; // 关联的项目ID
+  project: number; // 关联的项目ID
+  projectName?: string;
 }
 
 // API响应类型

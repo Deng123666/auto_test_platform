@@ -1,7 +1,7 @@
 <template>
   <div class="projects-container">
     <div class="page-header">
-      <h1 class="page-title"> 用例管理</h1>
+      <h1 class="page-title">{{ $route.query.projectName }} 用例管理 </h1>
       <div class="search-container">
         <el-input
           v-model="searchQuery"
@@ -126,6 +126,24 @@
             clearable
           />
         </el-form-item>
+        <!-- 添加项目选择下拉框 -->
+        <el-form-item label="所属项目" prop="project">
+          <el-select
+            v-model="defaultProject"
+            placeholder="请选择项目"
+            filterable
+            clearable
+            :disabled="isProjectFixed"
+            style="width: 100%"
+          >
+            <el-option
+              v-for="project in projects"
+              :key="project.id"
+              :label="project.name"
+              :value="project.id"
+            />
+          </el-select>
+        </el-form-item>
         <el-form-item label="用例描述" prop="description">
           <el-input
             v-model="formTestCase.description"
@@ -178,37 +196,36 @@
 </template>
 
 <script lang="ts">
-// 保持原有的script逻辑完全不变
-import { defineComponent, onMounted, ref, reactive, toRefs, computed } from 'vue';
+import { defineComponent, onMounted, ref, reactive, toRefs, computed, watch } from 'vue';
 // import { fetchProjects, createProject, updateProject, deleteProject } from '@/api/projects';
 import { ElMessage, ElMessageBox } from 'element-plus';
 import { useRouter, useRoute } from 'vue-router';
 import { Folder, Warning, FolderDelete } from '@element-plus/icons-vue';
 import { createTestCase, deleteTestCase, fetchTestCases, updateTestCase } from '@/api/test_cases';
 import { fetchProjects } from '@/api/projects';
-import type { id } from 'element-plus/es/locales.mjs';
+import type { TestCase, Project, ApiResponse } from '@/types';
 
-interface TestCases {
-  id: number;
-  name: string;
-  description: string | null;
-  created_at: string;
-  updated_at: string;
-  project: number,
-  projectName: string,
-}
+// interface TestCases {
+//   id: number;
+//   name: string;
+//   description: string | null;
+//   created_at: string;
+//   updated_at: string;
+//   project: number,
+//   projectName: string,
+// }
 
-interface Project {
-  id: number,
-  name: string
-}
+// interface Project {
+//   id: number,
+//   name: string
+// }
 
-interface ApiResponse {
-  count: number;
-  next: string | null;
-  previous: string | null;
-  results: TestCases[];
-}
+// interface ApiResponse {
+//   count: number;
+//   next: string | null;
+//   previous: string | null;
+//   results: TestCases[];
+// }
 
 export default defineComponent({
   name: 'ProjectsView',
@@ -222,7 +239,9 @@ export default defineComponent({
     // const router = useRouter();
     const route = useRoute();
 
-    const testCases = ref<TestCases[]>([]);
+    const testCases = ref<TestCase[]>([]);
+    const currentProjectName = route.query?.projectName;
+    const currentProjectId = route.params.projectId;
     const projectName = ref('');
     const projects = ref<Project[]>([]);
     const loading = ref(false);
@@ -239,15 +258,19 @@ export default defineComponent({
     const searchQuery = ref(''); // 搜索关键词
 
     const router = useRouter();
-    // const goToProjectDetail = (project: Project) => {
-    //   router.push({
-    //     name: 'Cases',
-    //     params: { projectId: project.id },
-    //     state: { projectName: project.name }
-    //   });
-    // };
 
-    const formTestCase = reactive<TestCases>({
+    const defaultProject = computed({
+      get() {
+        // 当原数据为0时返回null，使选择框显示占位符
+        return formTestCase.project || null;
+      },
+      set(val) {
+        // 选择值时同步更新原数据
+        formTestCase.project = val || 0;
+      }
+    });
+
+    const formTestCase = reactive<TestCase>({
       id: 0,
       name: '',
       description: '',
@@ -264,8 +287,20 @@ export default defineComponent({
       ],
       description: [
         { max: 200, message: '用例描述不能超过200个字符', trigger: 'blur' }
+      ],
+      project: [
+        { required: true, message: '请选择项目', trigger: 'change' }
       ]
     };
+
+    const isProjectFixed = computed(() => {
+      return !!route.query.projectName;
+    });
+
+    // 获取路由中的 projectId（转为字符串类型）
+    const currentRouteProjectId = computed(() => {
+      return route.params.projectId?.toString();
+    });
 
     const getTestCases = async () => {
       loading.value = true;
@@ -278,20 +313,35 @@ export default defineComponent({
         // 创建项目ID到名称的映射
         const projectMap = new Map(projects.value.map(p => [p.id, p.name]));
 
-        // 获取测试用例数据
-        const response: ApiResponse = await fetchTestCases();
+        // 获取路由中的 projectId 和 projectName
+        const routeProjectId = route.params.projectId;
+        const routeProjectName = route.query.projectName?.toString();
 
-        // 获取路由中的projectId参数
-        const projectId = route.params.projectId;
+        // 若路由中存在 projectName，查找对应的项目 ID
+        let finalProjectId = routeProjectId ? Number(routeProjectId) : null; // 修改：默认null而非0
+        if (routeProjectName) {
+          const matchedProject = projects.value.find(p => p.name === routeProjectName);
+          if (matchedProject) {
+            finalProjectId = matchedProject.id;
+            // 如果是添加用例（非编辑模式），自动填充项目 ID 到表单
+            if (!isEditMode.value) {
+              formTestCase.project = finalProjectId;
+            }
+          } else {
+            error.value = '未找到名称为 "' + routeProjectName + '" 的项目';
+          }
+        }
 
-        // 为每个测试用例添加projectName并根据projectId过滤
-        testCases.value = response.results.map(caseItem => ({
-          ...caseItem,
-          projectName: projectMap.get(caseItem.project) || '未知项目'
-        }))
-        // 添加projectId过滤逻辑
-        .filter(caseItem => !projectId || caseItem.project === Number(projectId))
-        .sort((a, b) => a.id - b.id);
+        // 获取测试用例数据并过滤（根据最终确定的项目 ID）
+        const response: ApiResponse<TestCase> = await fetchTestCases();
+        testCases.value = response.results
+          .map(caseItem => ({
+            ...caseItem,
+            projectName: projectMap.get(caseItem.project) || '未知项目'
+          }))
+          // 修改：修复过滤逻辑，当finalProjectId为null时不过滤
+          .filter(caseItem => finalProjectId === null || caseItem.project === finalProjectId)
+          .sort((a, b) => a.id - b.id);
       } catch (err) {
         error.value = '获取用例列表失败，请稍后重试';
         console.error(err);
@@ -305,13 +355,17 @@ export default defineComponent({
       formTestCase.id = 0;
       formTestCase.name = '';
       formTestCase.description = '';
+      // 初始化项目字段为当前项目的 ID（转换为数字）
+      if (route.params.projectId) {
+        formTestCase.project = Number(route.params.projectId);
+      }
       dialogVisible.value = true;
       if (testCaseFormRef.value) {
         testCaseFormRef.value.resetFields();
       }
     };
 
-    const handleEdit = (testCase: TestCases) => {
+    const handleEdit = (testCase: TestCase) => {
       isEditMode.value = true;
       currentEditId.value = testCase.id;
       formTestCase.id = testCase.id;
@@ -325,49 +379,56 @@ export default defineComponent({
       }
     };
 
-    const handleDelete = (testCase: TestCases) => {
+    const handleDelete = (testCase: TestCase) => {
       deleteProjectId.value = testCase.id;
       deleteProjectName.value = testCase.name;
       deleteDialogVisible.value = true;
     };
 
     const submitTestCaseForm = async () => {
-    if (!testCaseFormRef.value) return;
+      if (!testCaseFormRef.value) return;
 
-    try {
-      await testCaseFormRef.value.validate();
-      submitLoading.value = true;
+      try {
+        await testCaseFormRef.value.validate();
+        submitLoading.value = true;
 
-      if (isEditMode.value) {
-        await updateTestCase(formTestCase.id, {
+        // 修复：确保project参数为数字类型且正确传递
+        const requestData = {
           name: formTestCase.name,
           description: formTestCase.description,
-          project: formTestCase.project
-        });
-        ElMessage.success('用例更新成功');
-      } else {
-        await createTestCase({
-          name: formTestCase.name,
-          description: formTestCase.description,
-          project: formTestCase.project
-        });
-        ElMessage.success('用例创建成功');
-      }
+          project: Number(formTestCase.project) // 强制转换为数字类型
+        };
 
-      dialogVisible.value = false;
-      getTestCases();
-    } catch (err) {
-      if (err === false) {
-        return;
+        console.log('提交参数:', requestData); // 添加调试日志
+
+        if (isEditMode.value) {
+          await updateTestCase(formTestCase.id, requestData);
+          ElMessage.success('用例更新成功');
+        } else {
+          // 修复：仅使用表单中的project值，删除路由参数混合逻辑
+          await createTestCase(requestData);
+          ElMessage.success('用例创建成功');
+        }
+
+        dialogVisible.value = false;
+        // 修复：确保数据刷新完成
+        await getTestCases();
+      } catch (err) {
+        // 增强错误处理
+        console.error('提交错误详情:', err);
+        if (err instanceof Error) {
+          ElMessage.error(`错误: ${err.message}`);
+        } else if (typeof err === 'object' && err) {
+          ElMessage.error(`请求失败: ${JSON.stringify(err)}`);
+        } else {
+          const errorMsg = isEditMode.value ? '更新用例失败，请稍后重试' : '创建用例失败，请稍后重试';
+          error.value = errorMsg;
+          ElMessage.error(errorMsg);
+        }
+      } finally {
+        submitLoading.value = false;
       }
-      const errorMsg = isEditMode.value ? '更新用例失败，请稍后重试' : '创建用例失败，请稍后重试';
-      error.value = errorMsg;
-      ElMessage.error(errorMsg);
-      console.error(err);
-    } finally {
-      submitLoading.value = false;
-    }
-  };
+    };
 
     const confirmDelete = async () => {
       deleteLoading.value = true;
@@ -395,7 +456,7 @@ export default defineComponent({
       );
     });
 
-    const goToTestCaseDetail = (testCase: TestCases) => {
+    const goToTestCaseDetail = (testCase: TestCase) => {
       router.push({
         name: 'CaseDetail',
         params: { testCaseId: testCase.id },
@@ -410,6 +471,16 @@ export default defineComponent({
     onMounted(() => {
       getTestCases();
     });
+
+    // 添加路由参数监听，参数变化时重新获取用例数据
+    watch(
+      // 监听影响用例过滤的路由参数
+      () => [route.query.projectName, route.params.projectId],
+      // 参数变化时执行的回调
+      () => {
+        getTestCases(); // 重新获取并过滤用例数据
+      }
+    );
 
     return {
       testCases,
@@ -426,7 +497,11 @@ export default defineComponent({
       deleteProjectName,
       formTestCase,
       formRules,
-      projectName,
+      projects,
+      currentProjectName,
+      currentProjectId,
+      isProjectFixed,
+      defaultProject,
       handleAddTestCase,
       handleEdit,
       handleDelete,

@@ -44,15 +44,31 @@ export interface Project {
   updated_at: string;
 }
 
-// 测试用例类型
+// TestCase接口
 export interface TestCase {
   id: number;
   name: string;
-  description: string | null;
+  description?: string;
+  project: number;
+  projectName?: string;
   created_at: string;
   updated_at: string;
-  project: number; // 关联的项目ID
-  projectName?: string;
+  api_config?: ApiConfig;
+}
+
+export interface ApiConfig {
+  id?: number;
+  test_case_id: number;
+  url: string;
+  method: string;
+  query_params: Array<{ key: string; value: string }>;
+  header_params: Array<{ key: string; value: string }>;
+  body_type: string;
+  raw_type?: string;
+  raw_body?: string;
+  body_params: Array<{ key: string; value: string }>;
+  created_at?: string;
+  updated_at?: string;
 }
 
 // API响应类型

@@ -4,8 +4,8 @@ import AppLayout from '@/components/layout/AppLayout.vue'
 import Home from '@/views/Home.vue'
 import ProjectsView from '@/views/project/ProjectsView.vue'
 import TestCaseView from '@/views/test-case/TestCaseView.vue'
-import CaseDetailView from '@/views/test-case/CaseDetailView.vue'
-import TestCaseExecutionview from '@/views/execution/TestCaseExecutionview.vue'
+// import CaseDetailView from '@/views/test-case/CaseDetailView.vue'
+import HistoryTasksView from '@/views/task/HistoryTasksView.vue'
 import ReportsView from '@/views/report/ReportsView.vue'
 
 const routes: Array<RouteRecordRaw> = [
@@ -18,12 +18,7 @@ const routes: Array<RouteRecordRaw> = [
       { path: '/projects/', name: 'projects', component: ProjectsView },
       { path: '/project/:projectId/', name: 'ProjectDetailCases', component: TestCaseView, props: true },
       { path: '/test-cases/', name: 'Cases', component: TestCaseView },
-      { path: '/test-cases/:testCaseId', name: 'CaseDetail', component: CaseDetailView,
-        props: (route) => ({
-          testCaseId: route.params.testCaseId,
-          ...(route.state? route.state : {})
-        }) },
-      { path: '/test-executions/', name: 'Executions', component: TestCaseExecutionview },
+      { path: '/test-executions/', name: 'Executions', component: HistoryTasksView },
       { path: '/reports/', name: 'Reports', component: ReportsView}
     ]
   },

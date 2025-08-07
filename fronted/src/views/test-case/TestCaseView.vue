@@ -38,7 +38,7 @@
           <template #default="scope">
             <el-link
               type="primary"
-              @click="goToTestCaseDetail(scope.row)"
+              @click="openConfigCard(scope.row)"
               class="project-link"
             >
               <el-icon class="link-icon"><Folder /></el-icon>
@@ -88,15 +88,11 @@
           <template #default="scope">
             <el-button
               type="primary"
-
-
               @click="handleEdit(scope.row)"
               class="action-btn edit-btn"
             >编辑</el-button>
             <el-button
               type="danger"
-
-
               @click="handleDelete(scope.row)"
               class="action-btn"
             >删除</el-button>
@@ -192,52 +188,231 @@
         >确认删除</el-button>
       </template>
     </el-dialog>
+
+    <!-- 接口配置弹窗 -->
+    <el-dialog
+      v-model="configCardVisible"
+      title="接口配置"
+      :width="'800px'"
+      :close-on-click-modal="false"
+      class="modern-dialog"
+    >
+      <el-form
+        ref="apiConfigFormRef"
+        :model="apiConfigForm"
+        label-width="100px"
+        label-position="top"
+      >
+        <el-row :gutter="20">
+          <el-col :span="16">
+            <el-form-item label="请求URL" prop="url">
+              <el-input
+                v-model="apiConfigForm.url"
+                placeholder="请输入接口URL"
+                clearable
+                style="width: 100%"
+              />
+            </el-form-item>
+          </el-col>
+          <el-col :span="8">
+            <el-form-item label="请求方法" prop="method">
+              <el-select
+                v-model="apiConfigForm.method"
+                placeholder="请选择请求方法"
+                style="width: 100%"
+              >
+                <el-option label="GET" value="GET" />
+                <el-option label="POST" value="POST" />
+                <el-option label="PUT" value="PUT" />
+                <el-option label="DELETE" value="DELETE" />
+                <el-option label="PATCH" value="PATCH" />
+              </el-select>
+            </el-form-item>
+          </el-col>
+        </el-row>
+
+        <!-- 多页参数输入区域 -->
+        <el-tabs v-model="activeTab" type="card" class="params-tabs">
+          <el-tab-pane label="Query参数" name="query">
+            <el-table
+              :data="apiConfigForm.queryParams"
+              border
+              style="width: 100%"
+              size="small"
+            >
+              <el-table-column prop="key" label="参数名">
+                <template #default="scope">
+                  <el-input v-model="scope.row.key" size="small" />
+                </template>
+              </el-table-column>
+              <el-table-column prop="value" label="参数值">
+                <template #default="scope">
+                  <el-input v-model="scope.row.value" size="small" />
+                </template>
+              </el-table-column>
+              <el-table-column label="操作">
+                <template #default="scope">
+                  <el-button
+                    type="text"
+                    size="small"
+                    @click="removeParam('query', scope.$index)"
+                    icon="Delete"
+                    class="text-danger"
+                  />
+                </template>
+              </el-table-column>
+            </el-table>
+            <el-button
+              type="dashed"
+              size="small"
+              @click="addParam('query')"
+              style="width: 100%; margin-top: 10px"
+            >
+              <el-icon><Plus /></el-icon> 添加参数
+            </el-button>
+          </el-tab-pane>
+
+          <el-tab-pane label="请求头" name="headers">
+            <el-table
+              :data="apiConfigForm.headerParams"
+              border
+              style="width: 100%"
+              size="small"
+            >
+              <el-table-column prop="key" label="参数名">
+                <template #default="scope">
+                  <el-input v-model="scope.row.key" size="small" />
+                </template>
+              </el-table-column>
+              <el-table-column prop="value" label="参数值">
+                <template #default="scope">
+                  <el-input v-model="scope.row.value" size="small" />
+                </template>
+              </el-table-column>
+              <el-table-column label="操作">
+                <template #default="scope">
+                  <el-button
+                    type="text"
+                    size="small"
+                    @click="removeParam('headers', scope.$index)"
+                    icon="Delete"
+                    class="text-danger"
+                  />
+                </template>
+              </el-table-column>
+            </el-table>
+            <el-button
+              type="dashed"
+              size="small"
+              @click="addParam('headers')"
+              style="width: 100%; margin-top: 10px"
+            >
+              <el-icon><Plus /></el-icon> 添加参数
+            </el-button>
+          </el-tab-pane>
+
+          <el-tab-pane label="请求体" name="body">
+            <el-radio-group v-model="apiConfigForm.bodyType" style="margin-bottom: 15px">
+              <el-radio label="form-data" /> form-data
+              <el-radio label="x-www-form-urlencoded" /> x-www-form-urlencoded
+              <el-radio label="raw" /> raw
+              <el-radio label="binary" /> binary
+            </el-radio-group>
+
+            <template v-if="['form-data', 'x-www-form-urlencoded'].includes(apiConfigForm.bodyType)">
+              <el-table
+                :data="apiConfigForm.bodyParams"
+                border
+                style="width: 100%"
+                size="small"
+              >
+                <el-table-column prop="key" label="参数名">
+                  <template #default="scope">
+                    <el-input v-model="scope.row.key" size="small" />
+                  </template>
+                </el-table-column>
+                <el-table-column prop="value" label="参数值">
+                  <template #default="scope">
+                    <el-input v-model="scope.row.value" size="small" />
+                  </template>
+                </el-table-column>
+                <el-table-column label="操作">
+                  <template #default="scope">
+                    <el-button
+                      type="text"
+                      size="small"
+                      @click="removeParam('body', scope.$index)"
+                      icon="Delete"
+                      class="text-danger"
+                    />
+                  </template>
+                </el-table-column>
+              </el-table>
+              <el-button
+                type="dashed"
+                size="small"
+                @click="addParam('body')"
+                style="width: 100%; margin-top: 10px"
+              >
+                <el-icon><Plus /></el-icon> 添加参数
+              </el-button>
+            </template>
+
+            <template v-else-if="apiConfigForm.bodyType === 'raw'">
+              <el-select v-model="apiConfigForm.rawType" style="width: 100%; margin-bottom: 10px">
+                <el-option label="Text" value="text" />
+                <el-option label="JavaScript" value="javascript" />
+                <el-option label="JSON" value="json" />
+                <el-option label="HTML" value="html" />
+                <el-option label="XML" value="xml" />
+              </el-select>
+              <el-input
+                v-model="apiConfigForm.rawBody"
+                type="textarea"
+                rows="6"
+                placeholder="请输入请求体内容"
+              />
+            </template>
+
+            <template v-else-if="apiConfigForm.bodyType === 'binary'">
+              <el-upload class="upload-demo" action="#" :auto-upload="false">
+                <el-button type="primary">点击上传文件</el-button>
+              </el-upload>
+            </template>
+          </el-tab-pane>
+        </el-tabs>
+      </el-form>
+
+      <template #footer>
+        <el-button @click="configCardVisible = false">取消</el-button>
+        <el-button type="primary" @click="saveApiConfig">保存配置</el-button>
+      </template>
+    </el-dialog>
   </div>
 </template>
 
 <script lang="ts">
-import { defineComponent, onMounted, ref, reactive, toRefs, computed, watch } from 'vue';
-// import { fetchProjects, createProject, updateProject, deleteProject } from '@/api/projects';
-import { ElMessage, ElMessageBox } from 'element-plus';
+import { defineComponent, onMounted, ref, reactive, computed, watch } from 'vue';
+import { ElMessage } from 'element-plus';
 import { useRouter, useRoute } from 'vue-router';
-import { Folder, Warning, FolderDelete } from '@element-plus/icons-vue';
-import { createTestCase, deleteTestCase, fetchTestCases, updateTestCase } from '@/api/test_cases';
+import { Folder, Warning, FolderDelete, Plus } from '@element-plus/icons-vue';
+import { createTestCase, createTestCaseApiConfig, deleteTestCase, fetchTestCases, updateTestCase } from '@/api/test_cases';
 import { fetchProjects } from '@/api/projects';
 import type { TestCase, Project, ApiResponse } from '@/types';
+import { getTestCaseApiConfig, saveTestCaseApiConfig } from '@/api/test_cases';
 
-// interface TestCases {
-//   id: number;
-//   name: string;
-//   description: string | null;
-//   created_at: string;
-//   updated_at: string;
-//   project: number,
-//   projectName: string,
-// }
-
-// interface Project {
-//   id: number,
-//   name: string
-// }
-
-// interface ApiResponse {
-//   count: number;
-//   next: string | null;
-//   previous: string | null;
-//   results: TestCases[];
-// }
 
 export default defineComponent({
   name: 'ProjectsView',
   components: {
     Folder,
     Warning,
-    FolderDelete
+    FolderDelete,
+    Plus,
   },
   setup() {
-    // 原有的setup逻辑保持完全不变
-    // const router = useRouter();
     const route = useRoute();
+    const router = useRouter();
 
     const testCases = ref<TestCase[]>([]);
     const currentProjectName = route.query?.projectName;
@@ -255,17 +430,14 @@ export default defineComponent({
     const currentEditId = ref(0);
     const deleteProjectName = ref('');
     const deleteProjectId = ref(0);
-    const searchQuery = ref(''); // 搜索关键词
+    const searchQuery = ref('');
 
-    const router = useRouter();
 
     const defaultProject = computed({
       get() {
-        // 当原数据为0时返回null，使选择框显示占位符
         return formTestCase.project || null;
       },
       set(val) {
-        // 选择值时同步更新原数据
         formTestCase.project = val || 0;
       }
     });
@@ -278,6 +450,7 @@ export default defineComponent({
       updated_at: '',
       project: 0,
       projectName: '',
+      isConfigured: false
     });
 
     const formRules = {
@@ -297,7 +470,6 @@ export default defineComponent({
       return !!route.query.projectName;
     });
 
-    // 获取路由中的 projectId（转为字符串类型）
     const currentRouteProjectId = computed(() => {
       return route.params.projectId?.toString();
     });
@@ -306,24 +478,19 @@ export default defineComponent({
       loading.value = true;
       error.value = '';
       try {
-        // 先获取所有项目
         const projectsResponse = await fetchProjects();
         projects.value = projectsResponse.results;
 
-        // 创建项目ID到名称的映射
         const projectMap = new Map(projects.value.map(p => [p.id, p.name]));
 
-        // 获取路由中的 projectId 和 projectName
         const routeProjectId = route.params.projectId;
         const routeProjectName = route.query.projectName?.toString();
 
-        // 若路由中存在 projectName，查找对应的项目 ID
-        let finalProjectId = routeProjectId ? Number(routeProjectId) : null; // 修改：默认null而非0
+        let finalProjectId = routeProjectId ? Number(routeProjectId) : null;
         if (routeProjectName) {
           const matchedProject = projects.value.find(p => p.name === routeProjectName);
           if (matchedProject) {
             finalProjectId = matchedProject.id;
-            // 如果是添加用例（非编辑模式），自动填充项目 ID 到表单
             if (!isEditMode.value) {
               formTestCase.project = finalProjectId;
             }
@@ -332,14 +499,12 @@ export default defineComponent({
           }
         }
 
-        // 获取测试用例数据并过滤（根据最终确定的项目 ID）
         const response: ApiResponse<TestCase> = await fetchTestCases();
         testCases.value = response.results
           .map(caseItem => ({
             ...caseItem,
             projectName: projectMap.get(caseItem.project) || '未知项目'
           }))
-          // 修改：修复过滤逻辑，当finalProjectId为null时不过滤
           .filter(caseItem => finalProjectId === null || caseItem.project === finalProjectId)
           .sort((a, b) => a.id - b.id);
       } catch (err) {
@@ -355,7 +520,6 @@ export default defineComponent({
       formTestCase.id = 0;
       formTestCase.name = '';
       formTestCase.description = '';
-      // 初始化项目字段为当前项目的 ID（转换为数字）
       if (route.params.projectId) {
         formTestCase.project = Number(route.params.projectId);
       }
@@ -392,29 +556,23 @@ export default defineComponent({
         await testCaseFormRef.value.validate();
         submitLoading.value = true;
 
-        // 修复：确保project参数为数字类型且正确传递
         const requestData = {
           name: formTestCase.name,
           description: formTestCase.description,
-          project: Number(formTestCase.project) // 强制转换为数字类型
+          project: Number(formTestCase.project)
         };
-
-        console.log('提交参数:', requestData); // 添加调试日志
 
         if (isEditMode.value) {
           await updateTestCase(formTestCase.id, requestData);
           ElMessage.success('用例更新成功');
         } else {
-          // 修复：仅使用表单中的project值，删除路由参数混合逻辑
           await createTestCase(requestData);
           ElMessage.success('用例创建成功');
         }
 
         dialogVisible.value = false;
-        // 修复：确保数据刷新完成
         await getTestCases();
       } catch (err) {
-        // 增强错误处理
         console.error('提交错误详情:', err);
         if (err instanceof Error) {
           ElMessage.error(`错误: ${err.message}`);
@@ -445,7 +603,6 @@ export default defineComponent({
       }
     };
 
-    // 添加搜索过滤计算属性
     const filteredTestCases = computed(() => {
       const query = searchQuery.value.toLowerCase().trim();
       if (!query) return testCases.value;
@@ -456,11 +613,125 @@ export default defineComponent({
       );
     });
 
+    // 接口配置相关变量
+    const configCardVisible = ref(false);
+    const activeTab = ref('query');
+    const currentConfigTestCase = ref<TestCase | null>(null);
+    const apiConfigLoading = ref(false); // 新增：加载配置的loading状态
+
+    const apiConfigForm = reactive({
+      url: '',
+      method: 'GET',
+      queryParams: [] as Array<{key: string; value: string}>,
+      headerParams: [] as Array<{key: string; value: string}>,
+      bodyType: 'form-data',
+      rawType: 'json',
+      rawBody: '',
+      bodyParams: [] as Array<{key: string; value: string}>
+    });
+
+    // 接口配置相关方法
+    const openConfigCard = async (testCase: TestCase) => {
+      currentConfigTestCase.value = testCase;
+      configCardVisible.value = true;
+      apiConfigLoading.value = true;
+
+      try {
+        // 重置表单
+        apiConfigForm.url = '';
+        apiConfigForm.method = 'GET';
+        apiConfigForm.queryParams = [];
+        apiConfigForm.headerParams = [];
+        apiConfigForm.bodyParams = [];
+        apiConfigForm.rawBody = '';
+        apiConfigForm.bodyType = 'form-data';
+        apiConfigForm.rawType = 'json';
+
+        const savedConfig = await getTestCaseApiConfig(testCase.id);
+        apiConfigForm.url = savedConfig.url;
+        apiConfigForm.method = savedConfig.method;
+        apiConfigForm.queryParams = savedConfig.query_params || [];
+        apiConfigForm.headerParams = savedConfig.header_params || [];
+        apiConfigForm.bodyType = savedConfig.body_type;
+        apiConfigForm.rawType = savedConfig.raw_type || 'json';
+        apiConfigForm.rawBody = savedConfig.raw_body || '';
+        apiConfigForm.bodyParams = savedConfig.body_params || [];
+      } catch (err) {
+        console.error('加载接口配置222失败:', err);
+        const requestData = {
+          test_case: testCase.id,
+          url: apiConfigForm.url = "https://www.baidu.com",
+          method: apiConfigForm.method = 'GET',
+          queryParams: [],
+          headerParams: [],
+          bodyType: '',
+          rawType: 'json',
+          rawBody: '',
+          bodyParams: [],
+        }
+        await createTestCaseApiConfig(requestData);
+
+      } finally {
+        apiConfigLoading.value = false;
+      }
+    };
+
+    const addParam = (type: 'query' | 'headers' | 'body') => {
+      if (type === 'query') {
+        apiConfigForm.queryParams.push({ key: '', value: '' });
+      } else if (type === 'headers') {
+        apiConfigForm.headerParams.push({ key: '', value: '' });
+      } else if (type === 'body') {
+        apiConfigForm.bodyParams.push({ key: '', value: '' });
+      }
+    };
+
+    const removeParam = (type: 'query' | 'headers' | 'body', index: number) => {
+      if (type === 'query') {
+        apiConfigForm.queryParams.splice(index, 1);
+      } else if (type === 'headers') {
+        apiConfigForm.headerParams.splice(index, 1);
+      } else if (type === 'body') {
+        apiConfigForm.bodyParams.splice(index, 1);
+      }
+    };
+
+    const saveApiConfig = async () => {
+      if (!currentConfigTestCase.value) return;
+
+      apiConfigLoading.value = true;
+      try {
+        const requestData = {
+          test_case: currentConfigTestCase.value.id,
+          url: apiConfigForm.url,
+          method: apiConfigForm.method,
+          query_params: apiConfigForm.queryParams.filter(param => param.key.trim()),
+          header_params: apiConfigForm.headerParams.filter(param => param.key.trim()),
+          body_type: apiConfigForm.bodyType,
+          raw_type: apiConfigForm.rawType,
+          raw_body: apiConfigForm.rawBody,
+          body_params: apiConfigForm.bodyParams.filter(param => param.key.trim())
+        };
+        await saveTestCaseApiConfig(requestData, currentConfigTestCase.value.id);
+        ElMessage.success('接口配置保存成功');
+        configCardVisible.value = false;
+      } catch (err) {
+        console.error('保存接口配置失败:', err);
+        ElMessage.error('保存接口配置失败，请稍后重试');
+      } finally {
+        apiConfigLoading.value = false;
+      }
+    };
+
+    // const createApiConfig = async () => {
+    //   if (!currentConfigTestCase.value) return;
+    // }
+
     const goToTestCaseDetail = (testCase: TestCase) => {
       router.push({
         name: 'CaseDetail',
         params: { testCaseId: testCase.id },
-        state: { testCaseName: testCase.name }
+        query: { projectName: testCase.projectName, testCaseName: testCase.name }
       });
     };
 
@@ -472,13 +743,10 @@ export default defineComponent({
       getTestCases();
     });
 
-    // 添加路由参数监听，参数变化时重新获取用例数据
     watch(
-      // 监听影响用例过滤的路由参数
       () => [route.query.projectName, route.params.projectId],
-      // 参数变化时执行的回调
       () => {
-        getTestCases(); // 重新获取并过滤用例数据
+        getTestCases();
       }
     );
 
@@ -498,18 +766,26 @@ export default defineComponent({
       formTestCase,
       formRules,
       projects,
-      currentProjectName,
-      currentProjectId,
-      isProjectFixed,
       defaultProject,
+      isProjectFixed,
+      currentRouteProjectId,
       handleAddTestCase,
       handleEdit,
       handleDelete,
       submitTestCaseForm,
       confirmDelete,
       formatDate,
-      getTestCases,
       goToTestCaseDetail,
+
+      // 接口配置相关
+      configCardVisible,
+      activeTab,
+      apiConfigForm,
+      apiConfigLoading,
+      openConfigCard,
+      addParam,
+      removeParam,
+      saveApiConfig
     };
   }
 });
@@ -672,26 +948,35 @@ export default defineComponent({
   border-radius: 8px;
   min-width: 100px;
   transition: all 0.3s ease;
-}a
+}
 
-.primary-btn {
+a.primary-btn {
   background: linear-gradient(135deg, #4361ee, #3a0ca3);
   border: none;
   box-shadow: 0 4px 6px rgba(67, 97, 238, 0.2);
 }
 
-.danger-btn {
+a.danger-btn {
   background: linear-gradient(135deg, #f43f5e, #e11d48);
   border: none;
   box-shadow: 0 4px 6px rgba(244, 63, 94, 0.2);
 }
 
-.dialog-btn:hover {
+dialog-btn:hover {
   transform: translateY(-2px);
   box-shadow: 0 6px 12px rgba(67, 97, 238, 0.25);
 }
 
-.danger-btn:hover {
+danger-btn:hover {
   box-shadow: 0 6px 12px rgba(244, 63, 94, 0.25);
+}
+
+/* 接口配置弹窗样式 */
+.params-tabs {
+  margin-top: 20px;
+}
+
+.el-tabs__content {
+  padding-top: 15px;
 }
 </style>

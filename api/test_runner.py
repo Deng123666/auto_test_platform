@@ -3,7 +3,7 @@ import sqlite3
 import requests
 import time
 from django.utils import timezone
-from .models import TestExecution, TestCase, Environment, TestStep
+from .models import TestExecution, TestCase
 
 
 class TestRunner:

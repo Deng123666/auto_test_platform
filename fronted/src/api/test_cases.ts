@@ -1,4 +1,5 @@
 import axios from 'axios';
+import type { ApiConfig } from '@/types';
 
 // 创建 axios 实例
 const api = axios.create({
@@ -11,7 +12,6 @@ export const fetchTestCases = async (projectId?: number) => {
   try {
     const params = projectId ? { project: projectId } : {};
     const response = await api.get('/test-cases/', { params });
-    console.log(response)
     return response.data;
   } catch (error) {
     console.error('获取测试用例列表失败:', error);
@@ -30,7 +30,6 @@ export const createTestCase = async (testCaseData: {
 }) => {
   try {
     const response = await api.post('/test-cases/', testCaseData);
-    console.log(response)
 
     return response.data;
   } catch (error) {
@@ -63,6 +62,37 @@ export const deleteTestCase = async (testCaseId: number) => {
     return response.data;
   } catch (error) {
     console.error('删除测试用例失败:', error);
+    throw error;
+  }
+};
+
+// 新增接口配置相关API
+export const getTestCaseApiConfig = async (testCaseId: number): Promise<ApiConfig> => {
+  try{
+    const response = await api.get(`/api-config/${testCaseId}/`);
+    return response.data;
+  } catch (error) {
+    console.error('获取测试用例接口配置失败:', error);
+    throw error;
+  }
+};
+
+export const saveTestCaseApiConfig = async (data: Partial<ApiConfig>, testCaseId: number,): Promise<ApiConfig> => {
+  try{
+    const response = await api.put(`/api-config/${testCaseId}/`, data);
+    return response.data;
+  } catch (error) {
+    console.error('更新测试用例接口配置失败:', error);
+    throw error;
+  }
+};
+
+export const createTestCaseApiConfig = async (data: Partial<ApiConfig>): Promise<ApiConfig> => {
+  try{
+    const response = await api.post(`/api-config/`, data);
+    return response.data;
+  } catch (error) {
+    console.error('创建测试用例接口配置失败:', error);
     throw error;
   }
 };
